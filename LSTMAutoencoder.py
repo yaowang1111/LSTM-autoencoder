@@ -1,6 +1,5 @@
 import tensorflow as tf
-from tensorflow.python.ops.rnn_cell import LSTMCell
-
+from tf.nn.rnn_cell import LSTMCell
 import numpy as np
 
 
@@ -47,7 +46,7 @@ class LSTMAutoencoder(object):
             self._dec_cell = cell
 
         with tf.variable_scope('encoder'):
-            (self.z_codes, self.enc_state) = tf.contrib.rnn.static_rnn(self._enc_cell, inputs, dtype=tf.float32)
+            (self.z_codes, self.enc_state) = tf.nn.static_rnn(self._enc_cell, inputs, dtype=tf.float32)
 
         with tf.variable_scope('decoder') as vs:
             dec_weight_ = tf.Variable(tf.truncated_normal([hidden_num,
