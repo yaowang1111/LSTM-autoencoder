@@ -26,7 +26,7 @@ class LSTMAutoencoder(object):
     Args:
       hidden_num : number of hidden elements of each LSTM unit.
       inputs : a list of input tensors with size 
-              (batch_num x elem_num)
+              (batch_num x elem_num), every item in this list is a tensor of data
       cell : an rnn cell object (the default option 
             is `tf.python.ops.rnn_cell.LSTMCell`)
       optimizer : optimizer for rnn (the default option is
@@ -35,9 +35,10 @@ class LSTMAutoencoder(object):
       decode_without_input : Option to decode without input.
     """
 
-        self.batch_num = inputs[0].get_shape().as_list()[0]
-        self.elem_num = inputs[0].get_shape().as_list()[1]
+        self.batch_num = inputs[0].get_shape().as_list()[0] #should be the number of instances in a batch
+        self.elem_num = inputs[0].get_shape().as_list()[1]  #should be the dimension of a instance
 
+        #create layer with hidden_num lstm neurons, if the layer has not been given  
         if cell is None:
             self._enc_cell = LSTMCell(hidden_num)
             self._dec_cell = LSTMCell(hidden_num)
@@ -45,7 +46,7 @@ class LSTMAutoencoder(object):
             self._enc_cell = cell
             self._dec_cell = cell
 
-        with tf.variable_scope('encoder'):
+        with tf.variable_scope('encoder'): # used for drawing tensorboard
             (self.z_codes, self.enc_state) = tf.nn.static_rnn(self._enc_cell, inputs, dtype=tf.float32)
 
         with tf.variable_scope('decoder') as vs:
@@ -56,7 +57,7 @@ class LSTMAutoencoder(object):
                                     shape=[self.elem_num],
                                     dtype=tf.float32), name='dec_bias')
 
-            if decode_without_input:
+            if decode_without_input: # non-symmetric model
                 dec_inputs = [tf.zeros(tf.shape(inputs[0]),
                               dtype=tf.float32) for _ in
                               range(len(inputs))]
@@ -71,20 +72,20 @@ class LSTMAutoencoder(object):
                 self.output_ = tf.matmul(dec_output_, dec_weight_) + dec_bias_
             else:
 
-                dec_state = self.enc_state
-                dec_input_ = tf.zeros(tf.shape(inputs[0]),
+                dec_state = self.enc_state # symmetric model
+                dec_input_ = tf.zeros(tf.shape(inputs[0]),# data shape in this special batch
                         dtype=tf.float32)
                 dec_outputs = []
-                for step in range(len(inputs)):
-                    if step > 0:
-                        vs.reuse_variables()
+                for step in range(len(inputs)): #inputs is a list of (batch_num x elem_num) items
+                    if step > 0: # why should this be <0??
+                        vs.reuse_variables() # name of predefined variable scope
                     (dec_input_, dec_state) = \
                         self._dec_cell(dec_input_, dec_state)
                     dec_input_ = tf.matmul(dec_input_, dec_weight_) \
                         + dec_bias_
                     dec_outputs.append(dec_input_)
                 if reverse:
-                    dec_outputs = dec_outputs[::-1]
+                    dec_outputs = dec_outputs[::-1] #reverse
                 self.output_ = tf.transpose(tf.stack(dec_outputs), [1,
                         0, 2])
 

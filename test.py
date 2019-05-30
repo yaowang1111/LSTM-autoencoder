@@ -18,10 +18,11 @@ iteration = 10000
 
 # placeholder list
 p_input = tf.placeholder(tf.float32, shape=(batch_num, step_num, elem_num))
-p_inputs = [tf.squeeze(t, [1]) for t in tf.split(p_input, step_num, 1)]
+p_inputs = [tf.squeeze(t, [1]) for t in tf.split(p_input, step_num, 1)] #squueze tensor with dimension 1, consider a cubic which is actualy a plate, then squeeze returns a two dimensional tensor; split p_input into step_num smaller tensors along axis 1
+# p_input's axis 1 is step_num
 
 cell = tf.nn.rnn_cell.LSTMCell(hidden_num, use_peepholes=True)
-ae = LSTMAutoencoder(hidden_num, p_inputs, cell=cell, decode_without_input=True)
+ae = LSTMAutoencoder(hidden_num, p_inputs, cell=cell, decode_without_input=True) 
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -42,7 +43,8 @@ with tf.Session() as sess:
         (loss_val, _) = sess.run([ae.loss, ae.train], {p_input: random_sequences})
         print('iter %d:' % (i + 1), loss_val)
 
-    (input_, output_) = sess.run([ae.input_, ae.output_], {p_input: r + d})
+    (input_, output_) = sess.run([ae.input_, ae.output_], {p_input: r + d}) # ae.input_ ae.output_ are two computation op, {key:value}
+    #p_input is a placeholder and will be fed to the algorithm by a dictionary
     print('train result :')
     print('input :', input_[0, :, :].flatten())
     print('output :', output_[0, :, :].flatten())
