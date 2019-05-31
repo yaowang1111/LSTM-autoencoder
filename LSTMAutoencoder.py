@@ -26,7 +26,7 @@ class LSTMAutoencoder(object):
     Args:
       hidden_num : number of hidden elements of each LSTM unit.
       inputs : a list of input tensors with size 
-              (batch_num x elem_num), every item in this list is a tensor of data
+              (batch_num x elem_num), every item in this list is a tensor of data in one time slice, listed by time sequence
       cell : an rnn cell object (the default option 
             is `tf.python.ops.rnn_cell.LSTMCell`)
       optimizer : optimizer for rnn (the default option is
@@ -51,8 +51,7 @@ class LSTMAutoencoder(object):
 
         with tf.variable_scope('decoder') as vs:
             dec_weight_ = tf.Variable(tf.truncated_normal([hidden_num,
-                    self.elem_num], dtype=tf.float32), name='dec_weight'
-                    )
+                    self.elem_num], dtype=tf.float32), name='dec_weight')
             dec_bias_ = tf.Variable(tf.constant(0.1,
                                     shape=[self.elem_num],
                                     dtype=tf.float32), name='dec_bias')
@@ -87,9 +86,9 @@ class LSTMAutoencoder(object):
                 if reverse:
                     dec_outputs = dec_outputs[::-1] #reverse
                 self.output_ = tf.transpose(tf.stack(dec_outputs), [1,
-                        0, 2])
+                        0, 2]) # permutate tensor dimension from [a,b,c] to [b, a, c]
 
-        self.input_ = tf.transpose(tf.stack(inputs), [1, 0, 2])
+        self.input_ = tf.transpose(tf.stack(inputs), [1, 0, 2]) # make the input output dimensions equal 
         self.loss = tf.reduce_mean(tf.square(self.input_
                                    - self.output_))
 
